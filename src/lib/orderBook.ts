@@ -1,5 +1,5 @@
-import { ROWS } from '../constants'
-import type { Book, DisplayRow, OrderBookData, PriceLevel, Side } from '../types'
+import { ROWS } from '@/constants'
+import type { Book, DisplayRow, OrderBookData, PriceLevel, Side } from '@/types'
 
 /** Apply a list of [price, size] levels to a book. size 0 removes the level. */
 export function applyLevels(book: Book, levels: PriceLevel[]): void {

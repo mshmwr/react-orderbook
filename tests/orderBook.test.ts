@@ -5,8 +5,8 @@ import {
   isContinuous,
   isCrossed,
   selectRows,
-} from '../src/lib/orderBook'
-import type { Book, OrderBookData } from '../src/types'
+} from '@/lib/orderBook'
+import type { Book, OrderBookData } from '@/types'
 
 describe('applyLevels', () => {
   it('upserts levels and removes on size 0', () => {

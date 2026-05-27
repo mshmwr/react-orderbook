@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatNumber, formatPrice, formatSize } from '../src/utils/format'
+import { formatNumber, formatPrice, formatSize } from '@/utils/format'
 
 describe('formatNumber', () => {
   it('inserts thousands separators', () => {

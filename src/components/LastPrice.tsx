@@ -1,6 +1,6 @@
-import { COLORS } from '../constants'
-import { formatPrice } from '../utils/format'
-import type { PriceTrend } from '../types'
+import { COLORS } from '@/constants'
+import { formatPrice } from '@/utils/format'
+import type { PriceTrend } from '@/types'
 
 interface Props {
   price: number | null

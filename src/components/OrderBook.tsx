@@ -1,6 +1,6 @@
 import { LastPrice } from './LastPrice'
 import { OrderBookSide } from './OrderBookSide'
-import type { ConnStatus, DisplayRow, PriceTrend } from '../types'
+import type { ConnStatus, DisplayRow, PriceTrend } from '@/types'
 
 interface Props {
   asks: DisplayRow[]

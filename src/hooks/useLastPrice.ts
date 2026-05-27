@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { TRADE_TOPIC, TRADE_WS } from '../constants'
-import { createSocket } from '../lib/socket'
-import type { PriceTrend } from '../types'
+import { TRADE_TOPIC, TRADE_WS } from '@/constants'
+import { createSocket } from '@/lib/socket'
+import type { PriceTrend } from '@/types'
 
 interface TradeFill {
   price: string | number

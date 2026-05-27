@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { OrderBookRow } from './OrderBookRow'
 import type { AnnotatedRow } from './OrderBookRow'
-import type { DisplayRow, Side } from '../types'
+import type { DisplayRow, Side } from '@/types'
 
 interface Props {
   side: Side
