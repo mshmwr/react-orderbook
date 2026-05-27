@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { ORDERBOOK_TOPIC, ORDERBOOK_WS } from '../constants'
-import { applyLevels, applySnapshot, isContinuous, isCrossed, selectRows } from '../lib/orderBook'
-import { createSocket } from '../lib/socket'
-import type { Book, ConnStatus, DisplayRow, OrderBookData } from '../types'
+import { ORDERBOOK_TOPIC, ORDERBOOK_WS } from '@/constants'
+import { applyLevels, applySnapshot, isContinuous, isCrossed, selectRows } from '@/lib/orderBook'
+import { createSocket } from '@/lib/socket'
+import type { Book, ConnStatus, DisplayRow, OrderBookData } from '@/types'
 
 interface OrderBookState {
   asks: DisplayRow[]

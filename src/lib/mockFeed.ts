@@ -1,4 +1,4 @@
-import { SYMBOL } from '../constants'
+import { SYMBOL } from '@/constants'
 
 type Listener = ((ev: { data: string }) => void) | null
 type OpenListener = ((ev: unknown) => void) | null

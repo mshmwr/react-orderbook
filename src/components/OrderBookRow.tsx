@@ -1,8 +1,8 @@
 import { useRef } from 'react'
-import { COLORS } from '../constants'
-import { useFlash } from '../hooks/useFlash'
-import { formatPrice, formatSize } from '../utils/format'
-import type { DisplayRow, Side } from '../types'
+import { COLORS } from '@/constants'
+import { useFlash } from '@/hooks/useFlash'
+import { formatPrice, formatSize } from '@/utils/format'
+import type { DisplayRow, Side } from '@/types'
 
 export interface AnnotatedRow extends DisplayRow {
   /** Price not present in the previous render → new-quote flash. */
