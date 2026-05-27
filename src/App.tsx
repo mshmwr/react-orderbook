@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { OrderBook } from './components/OrderBook'
-import { useLastPrice } from './hooks/useLastPrice'
-import { useOrderBook } from './hooks/useOrderBook'
+import { OrderBook } from '@/components/OrderBook'
+import { useLastPrice } from '@/hooks/useLastPrice'
+import { useOrderBook } from '@/hooks/useOrderBook'
 
 const THROTTLE_MS = 300
 

@@ -1,5 +1,5 @@
-import { LastPrice } from './LastPrice'
-import { OrderBookSide } from './OrderBookSide'
+import { LastPrice } from '@/components/LastPrice'
+import { OrderBookSide } from '@/components/OrderBookSide'
 import type { ConnStatus, DisplayRow, PriceTrend } from '@/types'
 
 interface Props {

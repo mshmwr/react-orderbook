@@ -1,4 +1,4 @@
-import { MockSocket } from './mockFeed'
+import { MockSocket } from '@/lib/mockFeed'
 
 /** Set VITE_MOCK=1 to drive the UI from the offline replay feed. */
 export const USE_MOCK = import.meta.env.VITE_MOCK === '1'
