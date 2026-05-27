@@ -31,11 +31,11 @@ export function OrderBookRow({ side, row, token }: Props) {
   const priceColor = side === 'sell' ? COLORS.sellText : COLORS.buyText
 
   return (
-    <div className="ob-row" ref={rowRef}>
-      <div className="ob-row__bar" style={{ width: `${row.percent * 100}%`, background: barColor }} />
-      <div className="ob-row__price" style={{ color: priceColor }}>{formatPrice(row.price)}</div>
-      <div className="ob-row__size" ref={sizeRef}>{formatSize(row.size)}</div>
-      <div className="ob-row__total">{formatSize(row.total)}</div>
+    <div className="row" ref={rowRef}>
+      <div className="bar" style={{ width: `${row.percent * 100}%`, background: barColor }} />
+      <div className="price" style={{ color: priceColor }}>{formatPrice(row.price)}</div>
+      <div className="size" ref={sizeRef}>{formatSize(row.size)}</div>
+      <div className="total">{formatSize(row.total)}</div>
     </div>
   )
 }

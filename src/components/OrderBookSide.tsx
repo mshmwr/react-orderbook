@@ -38,7 +38,7 @@ export function OrderBookSide({ side, rows }: Props) {
   })
 
   return (
-    <div className={`ob-side ob-side--${side}`}>
+    <div className="side" data-side={side}>
       {annotated.map((row) => (
         <OrderBookRow key={row.price} side={side} row={row} token={token} />
       ))}
