@@ -1,0 +1,47 @@
+import { useEffect, useRef } from 'react'
+import { OrderBookRow } from './OrderBookRow'
+import type { AnnotatedRow } from './OrderBookRow'
+import type { DisplayRow, Side } from '../types'
+
+interface Props {
+  side: Side
+  rows: DisplayRow[]
+}
+
+/**
+ * Renders one side of the book and decides per-row flash animations by diffing
+ * each render's prices/sizes against the previously committed snapshot.
+ *
+ * The previous map is committed in an effect (after child flash effects run, so
+ * rows still see the correct diff). The first hydration is suppressed so the
+ * initial snapshot doesn't flash all eight rows.
+ */
+export function OrderBookSide({ side, rows }: Props) {
+  const prevSizes = useRef<Map<number, number>>(new Map())
+  const tokenRef = useRef(0)
+  tokenRef.current += 1
+  const token = tokenRef.current
+
+  const hydrated = prevSizes.current.size > 0
+  const annotated: AnnotatedRow[] = rows.map((r) => {
+    const prev = prevSizes.current.get(r.price)
+    const isNew = hydrated && prev === undefined
+    const sizeDir: AnnotatedRow['sizeDir'] =
+      prev === undefined ? null : r.size > prev ? 'up' : r.size < prev ? 'down' : null
+    return { ...r, isNew, sizeDir }
+  })
+
+  useEffect(() => {
+    const next = new Map<number, number>()
+    for (const r of rows) next.set(r.price, r.size)
+    prevSizes.current = next
+  })
+
+  return (
+    <div className={`ob-side ob-side--${side}`}>
+      {annotated.map((row) => (
+        <OrderBookRow key={row.price} side={side} row={row} token={token} />
+      ))}
+    </div>
+  )
+}
