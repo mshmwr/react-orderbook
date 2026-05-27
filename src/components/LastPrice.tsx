@@ -16,9 +16,9 @@ const STYLE: Record<PriceTrend, { color: string; background: string; arrow: stri
 export function LastPrice({ price, trend }: Props) {
   const s = STYLE[trend]
   return (
-    <div className="ob-last" style={{ color: s.color, background: s.background }}>
+    <div className="last" style={{ color: s.color, background: s.background }}>
       <span>{price === null ? '—' : formatPrice(price)}</span>
-      {s.arrow && <span className="ob-last__arrow">{s.arrow}</span>}
+      {s.arrow && <span className="arrow">{s.arrow}</span>}
     </div>
   )
 }
