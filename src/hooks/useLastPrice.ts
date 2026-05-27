@@ -40,7 +40,15 @@ export function useLastPrice(): { price: number | null; trend: PriceTrend } {
         if (!first) return
         const next = Number(first.price)
         const last = prev.current
-        setTrend(last === null || next === last ? 'same' : next > last ? 'up' : 'down')
+        let nextTrend: PriceTrend
+        if (last === null || next === last) {
+          nextTrend = 'same'
+        } else if (next > last) {
+          nextTrend = 'up'
+        } else {
+          nextTrend = 'down'
+        }
+        setTrend(nextTrend)
         prev.current = next
         setPrice(next)
       }
