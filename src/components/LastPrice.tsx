@@ -17,7 +17,7 @@ export function LastPrice({ price, trend }: Props) {
   const s = STYLE[trend]
   return (
     <div className="ob-last" style={{ color: s.color, background: s.background }}>
-      <span>{price == null ? '—' : formatPrice(price)}</span>
+      <span>{price === null ? '—' : formatPrice(price)}</span>
       {s.arrow && <span className="ob-last__arrow">{s.arrow}</span>}
     </div>
   )

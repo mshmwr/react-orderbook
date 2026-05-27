@@ -3,12 +3,12 @@
  * `decimals` (when given) fixes the fractional digit count.
  */
 export function formatNumber(value: number, decimals?: number): string {
-  const fixed = decimals != null ? value.toFixed(decimals) : String(value)
+  const fixed = decimals !== undefined ? value.toFixed(decimals) : String(value)
   const negative = fixed.startsWith('-')
   const unsigned = negative ? fixed.slice(1) : fixed
   const [int, frac] = unsigned.split('.')
   const withCommas = int.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-  const body = frac != null ? `${withCommas}.${frac}` : withCommas
+  const body = frac !== undefined ? `${withCommas}.${frac}` : withCommas
   return negative ? `-${body}` : body
 }
 
