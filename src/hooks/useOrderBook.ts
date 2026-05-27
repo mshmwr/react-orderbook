@@ -1,0 +1,126 @@
+import { useEffect, useRef, useState } from 'react'
+import { ORDERBOOK_TOPIC, ORDERBOOK_WS } from '../constants'
+import { applyLevels, applySnapshot, isContinuous, selectRows } from '../lib/orderBook'
+import { createSocket } from '../lib/socket'
+import type { Book, ConnStatus, DisplayRow, OrderBookData } from '../types'
+
+interface OrderBookState {
+  asks: DisplayRow[]
+  bids: DisplayRow[]
+  status: ConnStatus
+}
+
+/**
+ * Live order book: connects to the OSS futures stream, applies the initial
+ * snapshot, merges incremental deltas, and re-subscribes on a seqNum gap.
+ * Renders are batched per animation frame to absorb bursty deltas.
+ */
+export function useOrderBook(throttleMs = 0): OrderBookState {
+  const [asks, setAsks] = useState<DisplayRow[]>([])
+  const [bids, setBids] = useState<DisplayRow[]>([])
+  const [status, setStatus] = useState<ConnStatus>('connecting')
+
+  const asksBook     = useRef<Book>(new Map())
+  const bidsBook     = useRef<Book>(new Map())
+  const lastSeq      = useRef<number | null>(null)
+  const wsRef        = useRef<WebSocket | null>(null)
+  const flushQueued  = useRef(false)
+  const lastFlushAt  = useRef(0)
+  // ref so the flush closure always reads the latest value without re-running the effect
+  const throttleMsRef = useRef(throttleMs)
+  throttleMsRef.current = throttleMs
+
+  useEffect(() => {
+    let closedByUs = false
+    let reconnectTimer: ReturnType<typeof setTimeout> | undefined
+
+    const doFlush = () => {
+      flushQueued.current = false
+      lastFlushAt.current = Date.now()
+      setAsks(selectRows(asksBook.current, 'sell'))
+      setBids(selectRows(bidsBook.current, 'buy'))
+    }
+
+    const flush = () => {
+      if (flushQueued.current) return
+      flushQueued.current = true
+      const elapsed = Date.now() - lastFlushAt.current
+      const wait = Math.max(0, throttleMsRef.current - elapsed)
+      if (wait === 0) {
+        requestAnimationFrame(doFlush)
+      } else {
+        setTimeout(() => requestAnimationFrame(doFlush), wait)
+      }
+    }
+
+    const subscribe = (ws: WebSocket) =>
+      ws.send(JSON.stringify({ op: 'subscribe', args: [ORDERBOOK_TOPIC] }))
+    const unsubscribe = (ws: WebSocket) =>
+      ws.send(JSON.stringify({ op: 'unsubscribe', args: [ORDERBOOK_TOPIC] }))
+
+    // seqNum gap → drop local state and ask for a fresh snapshot.
+    const resync = () => {
+      const ws = wsRef.current
+      if (!ws || ws.readyState !== WebSocket.OPEN) return
+      lastSeq.current = null
+      unsubscribe(ws)
+      subscribe(ws)
+    }
+
+    const connect = () => {
+      const ws = createSocket(ORDERBOOK_WS)
+      wsRef.current = ws
+      setStatus('connecting')
+
+      ws.onopen = () => {
+        setStatus('open')
+        subscribe(ws)
+      }
+
+      ws.onmessage = (ev) => {
+        let msg: { topic?: string; data?: OrderBookData }
+        try {
+          msg = JSON.parse(ev.data as string)
+        } catch {
+          return
+        }
+        if (!msg.data || !msg.topic?.startsWith('update:')) return
+        const data = msg.data
+
+        if (data.type === 'snapshot') {
+          const built = applySnapshot(data)
+          asksBook.current = built.asks
+          bidsBook.current = built.bids
+          lastSeq.current = data.seqNum
+          flush()
+          return
+        }
+        if (data.type === 'delta') {
+          if (!isContinuous(data.prevSeqNum, lastSeq.current)) {
+            resync()
+            return
+          }
+          applyLevels(asksBook.current, data.asks)
+          applyLevels(bidsBook.current, data.bids)
+          lastSeq.current = data.seqNum
+          flush()
+        }
+      }
+
+      ws.onclose = () => {
+        setStatus('closed')
+        if (!closedByUs) reconnectTimer = setTimeout(connect, 1500)
+      }
+      ws.onerror = () => ws.close()
+    }
+
+    connect()
+    return () => {
+      closedByUs = true
+      if (reconnectTimer) clearTimeout(reconnectTimer)
+      wsRef.current?.close()
+    }
+  }, [])
+
+  return { asks, bids, status }
+}
