@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
-import { OrderBookRow } from './OrderBookRow'
-import type { AnnotatedRow } from './OrderBookRow'
+import { OrderBookRow } from '@/components/OrderBookRow'
+import type { AnnotatedRow } from '@/components/OrderBookRow'
 import type { DisplayRow, Side } from '@/types'
 
 interface Props {
