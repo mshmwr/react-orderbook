@@ -82,7 +82,8 @@ export function useOrderBook(throttleMs = 0): OrderBookState {
         let msg: { topic?: string; data?: OrderBookData }
         try {
           msg = JSON.parse(ev.data as string)
-        } catch {
+        } catch (err) {
+          console.error('[useOrderBook] Failed to parse WebSocket message:', err)
           return
         }
         if (!msg.data || !msg.topic?.startsWith('update:')) return

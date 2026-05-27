@@ -31,7 +31,8 @@ export function useLastPrice(): { price: number | null; trend: PriceTrend } {
         let msg: { topic?: string; data?: TradeFill[] }
         try {
           msg = JSON.parse(ev.data as string)
-        } catch {
+        } catch (err) {
+          console.error('[useLastPrice] Failed to parse WebSocket message:', err)
           return
         }
         if (!msg.topic?.startsWith('tradeHistoryApi') || !Array.isArray(msg.data)) return
