@@ -26,7 +26,7 @@ export function applySnapshot(data: OrderBookData): { bids: Book; asks: Book } {
  * to fetch a fresh snapshot.
  */
 export function isContinuous(prevSeqNum: number, lastSeqNum: number | null): boolean {
-  if (lastSeqNum == null) return false
+  if (lastSeqNum === null) return false
   return prevSeqNum === lastSeqNum
 }
 

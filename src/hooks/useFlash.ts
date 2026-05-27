@@ -16,7 +16,7 @@ export function useFlash(
 ): void {
   const lastToken = useRef<number | null>(null)
   useEffect(() => {
-    if (token == null || token === lastToken.current) return
+    if (token === null || token === lastToken.current) return
     lastToken.current = token
     const el = ref.current
     if (!el || typeof el.animate !== 'function') return
