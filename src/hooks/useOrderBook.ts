@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { ORDERBOOK_TOPIC, ORDERBOOK_WS } from '../constants'
-import { applyLevels, applySnapshot, isContinuous, selectRows } from '../lib/orderBook'
+import { applyLevels, applySnapshot, isContinuous, isCrossed, selectRows } from '../lib/orderBook'
 import { createSocket } from '../lib/socket'
 import type { Book, ConnStatus, DisplayRow, OrderBookData } from '../types'
 
@@ -12,7 +12,8 @@ interface OrderBookState {
 
 /**
  * Live order book: connects to the OSS futures stream, applies the initial
- * snapshot, merges incremental deltas, and re-subscribes on a seqNum gap.
+ * snapshot, merges incremental deltas, and re-subscribes on a seqNum gap or
+ * a crossed orderbook (best bid >= best ask).
  * Renders are batched per animation frame to absorb bursty deltas.
  */
 export function useOrderBook(throttleMs = 0): OrderBookState {
@@ -103,6 +104,11 @@ export function useOrderBook(throttleMs = 0): OrderBookState {
           applyLevels(asksBook.current, data.asks)
           applyLevels(bidsBook.current, data.bids)
           lastSeq.current = data.seqNum
+          // Crossed orderbook (best bid >= best ask) is invalid per BTSE spec.
+          if (isCrossed(bidsBook.current, asksBook.current)) {
+            resync()
+            return
+          }
           flush()
         }
       }

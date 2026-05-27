@@ -31,6 +31,19 @@ export function isContinuous(prevSeqNum: number, lastSeqNum: number | null): boo
 }
 
 /**
+ * Crossed orderbook guard. Returns true when the best bid (highest price in
+ * the bid book) is >= the best ask (lowest price in the ask book).
+ * Per BTSE API spec, this is an invalid state — caller should resync.
+ * Returns false when either book is empty (no spread to evaluate).
+ */
+export function isCrossed(bids: Book, asks: Book): boolean {
+  if (bids.size === 0 || asks.size === 0) return false
+  const bestBid = Math.max(...bids.keys())
+  const bestAsk = Math.min(...asks.keys())
+  return bestBid >= bestAsk
+}
+
+/**
  * Select the `rows` levels nearest the spread, annotated with cumulative total
  * and depth percentage, ordered for display.
  *

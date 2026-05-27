@@ -3,6 +3,7 @@ import {
   applyLevels,
   applySnapshot,
   isContinuous,
+  isCrossed,
   selectRows,
 } from '../src/lib/orderBook'
 import type { Book, OrderBookData } from '../src/types'
@@ -44,6 +45,30 @@ describe('isContinuous', () => {
   it('requires prevSeqNum to equal the last applied seqNum', () => {
     expect(isContinuous(10, 10)).toBe(true)
     expect(isContinuous(11, 10)).toBe(false) // gap → resync
+  })
+})
+
+describe('isCrossed', () => {
+  it('returns false for a normal spread (bid < ask)', () => {
+    const bids: Book = new Map([[99, 5]])
+    const asks: Book = new Map([[101, 5]])
+    expect(isCrossed(bids, asks)).toBe(false)
+  })
+  it('returns true when best bid equals best ask', () => {
+    const bids: Book = new Map([[100, 5]])
+    const asks: Book = new Map([[100, 5]])
+    expect(isCrossed(bids, asks)).toBe(true)
+  })
+  it('returns true when best bid exceeds best ask', () => {
+    const bids: Book = new Map([[102, 5]])
+    const asks: Book = new Map([[101, 5]])
+    expect(isCrossed(bids, asks)).toBe(true)
+  })
+  it('returns false when either book is empty', () => {
+    const bids: Book = new Map([[100, 5]])
+    const asks: Book = new Map()
+    expect(isCrossed(bids, asks)).toBe(false)
+    expect(isCrossed(new Map(), new Map([[100, 5]]))).toBe(false)
   })
 })
 
