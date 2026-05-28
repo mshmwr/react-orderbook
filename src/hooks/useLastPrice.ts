@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import { TRADE_TOPIC, TRADE_WS } from '@/constants'
-import { createSocket } from '@/lib/socket'
 import type { PriceTrend } from '@/types'
 
 interface TradeFill {
@@ -22,7 +21,7 @@ export function useLastPrice(): { price: number | null; trend: PriceTrend } {
     let reconnectTimer: ReturnType<typeof setTimeout> | undefined
 
     const connect = () => {
-      const ws = createSocket(TRADE_WS)
+      const ws = new WebSocket(TRADE_WS)
       wsRef.current = ws
       ws.onopen = () =>
         ws.send(JSON.stringify({ op: 'subscribe', args: [TRADE_TOPIC] }))

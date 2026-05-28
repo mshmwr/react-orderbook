@@ -64,15 +64,6 @@ body {
       }
     }
 
-    .status {
-      font-size: 10px;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      color: #8698aa;
-
-      &[data-status='open'] { color: #00b15d; }
-      &[data-status='closed'] { color: #ff5b5a; }
-    }
   }
 
   /* --- Column header --- */
