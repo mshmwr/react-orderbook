@@ -107,12 +107,15 @@ export function useOrderBook(throttleMs = 0): OrderBookState {
         const data = msg.data
 
         if (data.type === 'snapshot') {
-          resyncPending.current = false
           const built = applySnapshot(data)
           if (isCrossed(built.bids, built.asks)) {
-            resync()
+            // Crossed snapshot is an exchange error. Close the socket so the
+            // onclose handler reconnects after a 1500 ms delay — prevents a
+            // tight resync loop if the exchange keeps sending bad snapshots.
+            ws.close()
             return
           }
+          resyncPending.current = false
           asksBook.current = built.asks
           bidsBook.current = built.bids
           lastSeq.current = data.seqNum
