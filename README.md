@@ -15,15 +15,7 @@ The orderbook renders live by default, flushing one React state update per anima
 
 Click the **⚡ live** button in the top-right corner to switch to **🐢 300 ms throttle** mode — updates are coalesced into a fixed 300 ms interval instead of every frame. Click again to return to live mode.
 
-**Why use throttle mode?**
-
-| | ⚡ Live (rAF) | 🐢 300 ms throttle |
-|---|---|---|
-| React renders/sec | ≈ 60 | ≈ 3 |
-| CPU / battery | higher | ~20× lower |
-| Readability | prices flicker too fast to track | numbers update at a human-readable pace |
-
-Use throttle mode when you want to observe price levels without the visual noise of 60-fps updates, or to reduce main-thread load on lower-powered devices.
+Use throttle mode to observe price levels without 60-fps visual noise, or to reduce main-thread load on lower-powered devices.
 
 ## Scripts
 
