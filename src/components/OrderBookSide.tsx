@@ -19,7 +19,11 @@ interface Props {
 export function OrderBookSide({ side, rows }: Props) {
   const prevSizes = useRef<Map<number, number>>(new Map())
   const tokenRef = useRef(0)
-  tokenRef.current += 1
+  const prevRowsRef = useRef<DisplayRow[] | null>(null)
+  if (prevRowsRef.current !== rows) {
+    tokenRef.current += 1
+    prevRowsRef.current = rows
+  }
   const token = tokenRef.current
 
   const hydrated = prevSizes.current.size > 0

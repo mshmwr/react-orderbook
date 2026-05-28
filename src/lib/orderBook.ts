@@ -6,6 +6,7 @@ export function applyLevels(book: Book, levels: PriceLevel[]): void {
   for (const [priceStr, sizeStr] of levels) {
     const price = Number(priceStr)
     const size = Number(sizeStr)
+    if (!isFinite(price) || !isFinite(size)) continue
     if (size === 0) book.delete(price)
     else book.set(price, size)
   }
@@ -38,8 +39,10 @@ export function isContinuous(prevSeqNum: number, lastSeqNum: number | null): boo
  */
 export function isCrossed(bids: Book, asks: Book): boolean {
   if (bids.size === 0 || asks.size === 0) return false
-  const bestBid = Math.max(...bids.keys())
-  const bestAsk = Math.min(...asks.keys())
+  let bestBid = -Infinity
+  for (const p of bids.keys()) if (p > bestBid) bestBid = p
+  let bestAsk = Infinity
+  for (const p of asks.keys()) if (p < bestAsk) bestAsk = p
   return bestBid >= bestAsk
 }
 

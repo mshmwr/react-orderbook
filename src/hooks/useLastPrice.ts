@@ -38,6 +38,7 @@ export function useLastPrice(): { price: number | null; trend: PriceTrend } {
         const first = msg.data[0]
         if (!first) return
         const next = Number(first.price)
+        if (!isFinite(next)) return
         const last = prev.current
         let nextTrend: PriceTrend
         if (last === null || next === last) {
