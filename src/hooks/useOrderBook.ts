@@ -32,12 +32,21 @@ export function useOrderBook(throttleMs = 0): OrderBookState {
   useEffect(() => {
     let closedByUs = false
     let reconnectTimer: ReturnType<typeof setTimeout> | undefined
+    let pendingTimer: ReturnType<typeof setTimeout> | undefined
+    let pendingRaf: number | undefined
 
     const doFlush = () => {
+      pendingRaf = undefined
       flushQueued.current = false
       lastFlushAt.current = Date.now()
       setAsks(selectRows(asksBook.current, 'sell'))
       setBids(selectRows(bidsBook.current, 'buy'))
+    }
+
+    const cancelFlush = () => {
+      if (pendingTimer !== undefined) { clearTimeout(pendingTimer); pendingTimer = undefined }
+      if (pendingRaf !== undefined) { cancelAnimationFrame(pendingRaf); pendingRaf = undefined }
+      flushQueued.current = false
     }
 
     const flush = () => {
@@ -46,9 +55,12 @@ export function useOrderBook(throttleMs = 0): OrderBookState {
       const elapsed = Date.now() - lastFlushAt.current
       const wait = Math.max(0, throttleMsRef.current - elapsed)
       if (wait === 0) {
-        requestAnimationFrame(doFlush)
+        pendingRaf = requestAnimationFrame(doFlush)
       } else {
-        setTimeout(() => requestAnimationFrame(doFlush), wait)
+        pendingTimer = setTimeout(() => {
+          pendingTimer = undefined
+          pendingRaf = requestAnimationFrame(doFlush)
+        }, wait)
       }
     }
 
@@ -57,7 +69,8 @@ export function useOrderBook(throttleMs = 0): OrderBookState {
     const unsubscribe = (ws: WebSocket) =>
       ws.send(JSON.stringify({ op: 'unsubscribe', args: [ORDERBOOK_TOPIC] }))
 
-    // seqNum gap → drop local state and ask for a fresh snapshot.
+    // seqNum gap or crossed book → clear local state and ask for a fresh snapshot.
+    // cancelFlush prevents a stale doFlush from rendering dirty books after resync.
     // Guard prevents cascading resync: deltas arriving before the new snapshot
     // would each re-trigger resync without the flag.
     const resync = () => {
@@ -66,11 +79,15 @@ export function useOrderBook(throttleMs = 0): OrderBookState {
       if (!ws || ws.readyState !== WebSocket.OPEN) return
       resyncPending.current = true
       lastSeq.current = null
+      asksBook.current.clear()
+      bidsBook.current.clear()
+      cancelFlush()
       unsubscribe(ws)
       subscribe(ws)
     }
 
     const connect = () => {
+      resyncPending.current = false
       const ws = new WebSocket(ORDERBOOK_WS)
       wsRef.current = ws
 
@@ -92,6 +109,10 @@ export function useOrderBook(throttleMs = 0): OrderBookState {
         if (data.type === 'snapshot') {
           resyncPending.current = false
           const built = applySnapshot(data)
+          if (isCrossed(built.bids, built.asks)) {
+            resync()
+            return
+          }
           asksBook.current = built.asks
           bidsBook.current = built.bids
           lastSeq.current = data.seqNum
@@ -125,6 +146,7 @@ export function useOrderBook(throttleMs = 0): OrderBookState {
     return () => {
       closedByUs = true
       if (reconnectTimer) clearTimeout(reconnectTimer)
+      cancelFlush()
       wsRef.current?.close()
     }
   }, [])

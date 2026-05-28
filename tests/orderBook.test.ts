@@ -19,6 +19,19 @@ describe('applyLevels', () => {
     expect(book.get(100)).toBe(9) // updated
     expect(book.has(101)).toBe(false) // removed
   })
+
+  it('ignores levels with non-numeric price or size', () => {
+    const book: Book = new Map()
+    applyLevels(book, [['bad_price', '5'], ['100', 'NaN'], ['101', '3']])
+    expect(book.size).toBe(1)
+    expect(book.get(101)).toBe(3)
+  })
+
+  it('ignores Infinity in price or size', () => {
+    const book: Book = new Map()
+    applyLevels(book, [['Infinity', '5'], ['100', 'Infinity']])
+    expect(book.size).toBe(0)
+  })
 })
 
 describe('applySnapshot', () => {
@@ -69,6 +82,14 @@ describe('isCrossed', () => {
     const asks: Book = new Map()
     expect(isCrossed(bids, asks)).toBe(false)
     expect(isCrossed(new Map(), new Map([[100, 5]]))).toBe(false)
+  })
+
+  it('correctly detects crossed state after malformed levels are filtered out', () => {
+    const bids: Book = new Map()
+    const asks: Book = new Map()
+    applyLevels(bids, [['bad', '5'], ['102', '3']])
+    applyLevels(asks, [['NaN', '5'], ['101', '2']])
+    expect(isCrossed(bids, asks)).toBe(true) // bestBid 102 >= bestAsk 101
   })
 })
 
