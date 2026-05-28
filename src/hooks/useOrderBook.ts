@@ -27,6 +27,7 @@ export function useOrderBook(throttleMs = 0): OrderBookState {
   const wsRef        = useRef<WebSocket | null>(null)
   const flushQueued  = useRef(false)
   const lastFlushAt  = useRef(0)
+  const resyncPending = useRef(false)
   // ref so the flush closure always reads the latest value without re-running the effect
   const throttleMsRef = useRef(throttleMs)
   throttleMsRef.current = throttleMs
@@ -60,9 +61,13 @@ export function useOrderBook(throttleMs = 0): OrderBookState {
       ws.send(JSON.stringify({ op: 'unsubscribe', args: [ORDERBOOK_TOPIC] }))
 
     // seqNum gap → drop local state and ask for a fresh snapshot.
+    // Guard prevents cascading resync: deltas arriving before the new snapshot
+    // would each re-trigger resync without the flag.
     const resync = () => {
+      if (resyncPending.current) return
       const ws = wsRef.current
       if (!ws || ws.readyState !== WebSocket.OPEN) return
+      resyncPending.current = true
       lastSeq.current = null
       unsubscribe(ws)
       subscribe(ws)
@@ -90,6 +95,7 @@ export function useOrderBook(throttleMs = 0): OrderBookState {
         const data = msg.data
 
         if (data.type === 'snapshot') {
+          resyncPending.current = false
           const built = applySnapshot(data)
           asksBook.current = built.asks
           bidsBook.current = built.bids
