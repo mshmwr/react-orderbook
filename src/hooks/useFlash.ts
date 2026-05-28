@@ -26,5 +26,10 @@ export function useFlash(
       [{ backgroundColor: color }, { backgroundColor: 'transparent' }],
       { duration: 400, easing: 'ease-out' },
     )
+    return () => {
+      animRef.current?.cancel()
+      animRef.current = null
+      lastToken.current = null
+    }
   }, [token, color, ref])
 }
