@@ -1,13 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { ORDERBOOK_TOPIC, ORDERBOOK_WS } from '@/constants'
 import { applyLevels, applySnapshot, isContinuous, isCrossed, selectRows } from '@/lib/orderBook'
-import { createSocket } from '@/lib/socket'
-import type { Book, ConnStatus, DisplayRow, OrderBookData } from '@/types'
+import type { Book, DisplayRow, OrderBookData } from '@/types'
 
 interface OrderBookState {
   asks: DisplayRow[]
   bids: DisplayRow[]
-  status: ConnStatus
 }
 
 /**
@@ -19,7 +17,6 @@ interface OrderBookState {
 export function useOrderBook(throttleMs = 0): OrderBookState {
   const [asks, setAsks] = useState<DisplayRow[]>([])
   const [bids, setBids] = useState<DisplayRow[]>([])
-  const [status, setStatus] = useState<ConnStatus>('connecting')
 
   const asksBook     = useRef<Book>(new Map())
   const bidsBook     = useRef<Book>(new Map())
@@ -74,12 +71,10 @@ export function useOrderBook(throttleMs = 0): OrderBookState {
     }
 
     const connect = () => {
-      const ws = createSocket(ORDERBOOK_WS)
+      const ws = new WebSocket(ORDERBOOK_WS)
       wsRef.current = ws
-      setStatus('connecting')
 
       ws.onopen = () => {
-        setStatus('open')
         subscribe(ws)
       }
 
@@ -121,7 +116,6 @@ export function useOrderBook(throttleMs = 0): OrderBookState {
       }
 
       ws.onclose = () => {
-        setStatus('closed')
         if (!closedByUs) reconnectTimer = setTimeout(connect, 1500)
       }
       ws.onerror = () => ws.close()
@@ -135,5 +129,5 @@ export function useOrderBook(throttleMs = 0): OrderBookState {
     }
   }, [])
 
-  return { asks, bids, status }
+  return { asks, bids }
 }

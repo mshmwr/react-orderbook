@@ -27,4 +27,3 @@ export interface DisplayRow {
 }
 
 export type PriceTrend = 'up' | 'down' | 'same'
-export type ConnStatus = 'connecting' | 'open' | 'closed'

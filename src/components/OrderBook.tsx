@@ -1,18 +1,17 @@
 import { LastPrice } from '@/components/LastPrice'
 import { OrderBookSide } from '@/components/OrderBookSide'
-import type { ConnStatus, DisplayRow, PriceTrend } from '@/types'
+import type { DisplayRow, PriceTrend } from '@/types'
 
 interface Props {
   asks: DisplayRow[]
   bids: DisplayRow[]
   lastPrice: number | null
   trend: PriceTrend
-  status: ConnStatus
   throttled: boolean
   onToggleThrottle: () => void
 }
 
-export function OrderBook({ asks, bids, lastPrice, trend, status, throttled, onToggleThrottle }: Props) {
+export function OrderBook({ asks, bids, lastPrice, trend, throttled, onToggleThrottle }: Props) {
   return (
     <section className="ob">
       <header className="title">
@@ -26,7 +25,6 @@ export function OrderBook({ asks, bids, lastPrice, trend, status, throttled, onT
           >
             {throttled ? '🐢 300ms' : '⚡ live'}
           </button>
-          <span className="status" data-status={status}>{status}</span>
         </div>
       </header>
       <div className="head">

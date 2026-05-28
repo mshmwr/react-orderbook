@@ -7,7 +7,7 @@ const THROTTLE_MS = 300
 
 export default function App() {
   const [throttled, setThrottled] = useState(false)
-  const { asks, bids, status } = useOrderBook(throttled ? THROTTLE_MS : 0)
+  const { asks, bids } = useOrderBook(throttled ? THROTTLE_MS : 0)
   const { price, trend } = useLastPrice()
 
   return (
@@ -17,7 +17,6 @@ export default function App() {
         bids={bids}
         lastPrice={price}
         trend={trend}
-        status={status}
         throttled={throttled}
         onToggleThrottle={() => setThrottled((v) => !v)}
       />
