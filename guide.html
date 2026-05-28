@@ -1,0 +1,884 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>React 掛單簿 — 架構師導讀</title>
+<style>
+  :root {
+    --bg: #0b0e11;
+    --card: #131b29;
+    --card2: #1e2329;
+    --line: #2b3139;
+    --text: #eaecef;
+    --muted: #8698aa;
+    --ask: #ff5b5a;
+    --bid: #00b15d;
+    --accent: #f0b90b;
+    --react: #61dafb;
+    --code-bg: #0d1117;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "PingFang TC", "Noto Sans TC", ui-sans-serif, system-ui, sans-serif;
+    line-height: 1.8;
+    font-size: 16px;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code, pre, .mono { font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace; }
+
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 0 20px 80px; }
+
+  header.hero {
+    border-bottom: 1px solid var(--line);
+    background: radial-gradient(1200px 400px at 50% -120px, rgba(97,218,251,.08), transparent);
+  }
+  header.hero .wrap { padding-top: 56px; padding-bottom: 40px; }
+  h1 { font-size: 32px; line-height: 1.3; margin: 0 0 12px; }
+  h2 { font-size: 22px; margin: 40px 0 6px; scroll-margin-top: 16px;
+       display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  h2 .n {
+    font-size: 13px; color: var(--bg); background: var(--react); border-radius: 6px;
+    padding: 1px 8px; font-weight: 700; flex-shrink: 0;
+  }
+  h3 { font-size: 17px; margin: 28px 0 6px; color: var(--accent); }
+  .sub { color: var(--muted); font-size: 16px; max-width: 700px; }
+  p { margin: 12px 0; }
+  .lead { color: var(--muted); margin: 4px 0 16px; font-size: 15px; }
+
+  nav.toc {
+    margin: 28px 0 0; padding: 18px 20px; background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+  }
+  nav.toc .toc-title { margin: 0 0 12px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  nav.toc ol { margin: 0; padding-left: 0; columns: 2; column-gap: 28px; list-style: none; counter-reset: t; }
+  nav.toc li { counter-increment: t; padding: 3px 0; font-size: 14.5px; break-inside: avoid; }
+  nav.toc li::before { content: counter(t) ". "; color: var(--muted); }
+  @media (max-width: 720px) { nav.toc ol { columns: 1; } }
+
+  section.sec { padding-top: 40px; }
+
+  pre {
+    background: var(--code-bg); border: 1px solid var(--line); border-radius: 10px;
+    padding: 16px 18px; overflow-x: auto; font-size: 13.5px; line-height: 1.65; margin: 14px 0;
+  }
+  pre .file { display: block; color: var(--muted); font-size: 11px; margin-bottom: 10px; border-bottom: 1px solid var(--line); padding-bottom: 8px; }
+  :not(pre) > code { background: var(--card2); padding: 1px 7px; border-radius: 5px; font-size: 13.5px; color: #ffd9a0; }
+  .k { color: #ff7b72; } .s { color: #a5d6ff; } .c { color: #6e7681; font-style: italic; }
+  .f { color: #d2a8ff; } .v { color: #79c0ff; } .t { color: #ffa657; }
+
+  .pill {
+    display: inline-block; border: 1px solid var(--line); border-radius: 999px;
+    padding: 2px 11px; font-size: 12.5px; color: var(--muted); margin: 0 4px 4px 0;
+  }
+
+  .note {
+    border-left: 3px solid var(--react); background: rgba(97,218,251,.05);
+    border-radius: 0 8px 8px 0; padding: 13px 16px; margin: 16px 0; font-size: 15px;
+  }
+  .note b { color: var(--react); }
+  .warn {
+    border-left: 3px solid var(--ask); background: rgba(255,91,90,.06);
+    border-radius: 0 8px 8px 0; padding: 13px 16px; margin: 16px 0; font-size: 15px;
+  }
+  .warn b { color: var(--ask); }
+  .tip {
+    border-left: 3px solid var(--accent); background: rgba(240,185,11,.05);
+    border-radius: 0 8px 8px 0; padding: 13px 16px; margin: 16px 0; font-size: 15px;
+  }
+  .tip b { color: var(--accent); }
+
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+  th, td { text-align: left; padding: 9px 11px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+  td code { font-size: 12.5px; }
+  tr:hover td { background: rgba(255,255,255,.02); }
+
+  .diagram { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px; margin: 16px 0; overflow-x: auto; }
+  .diagram svg { display: block; margin: 0 auto; }
+  .dlabel { fill: var(--text); font-size: 13px; font-family: "PingFang TC","Noto Sans TC",sans-serif; }
+  .dmuted { fill: var(--muted); font-size: 11.5px; font-family: "SF Mono", monospace; }
+  .dbox { fill: var(--card2); stroke: var(--line); }
+  .dask { fill: rgba(255,91,90,.10); stroke: var(--ask); }
+  .dbid { fill: rgba(0,177,93,.10); stroke: var(--bid); }
+  .dacc { fill: rgba(240,185,11,.08); stroke: var(--accent); }
+  .dreact { fill: rgba(97,218,251,.08); stroke: var(--react); }
+  .darrow { stroke: var(--muted); stroke-width: 1.5; fill: none; marker-end: url(#ah); }
+  .dsolidbox { fill: var(--card2); stroke: var(--accent); stroke-width: 1.5; }
+
+  .ask-t { color: var(--ask); } .bid-t { color: var(--bid); }
+
+  ul li, ol li { margin: 5px 0; }
+  li { line-height: 1.7; }
+
+  .foot { margin-top: 56px; padding-top: 24px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
+
+  .path-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin: 16px 0;
+  }
+  .path-card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px;
+  }
+  .path-card .step { font-size: 11px; color: var(--react); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+  .path-card .title { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  .path-card .desc { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+  .file-grid {
+    display: grid; grid-template-columns: 210px 1fr; gap: 0; margin: 14px 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; font-size: 14px;
+  }
+  .file-grid .fl { padding: 8px 13px; border-bottom: 1px solid var(--line); }
+  .file-grid .fl:nth-child(odd) { background: var(--card2); font-family: monospace; font-size: 12.5px; color: #ffd9a0; word-break: break-all; }
+  .file-grid .fl:nth-child(even) { background: var(--card); color: var(--muted); }
+  .file-grid .fl:nth-last-child(-n+2) { border-bottom: none; }
+  .file-grid .fh { background: var(--code-bg) !important; color: var(--muted) !important; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; font-family: sans-serif !important; }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div>
+      <span class="pill">面試作品</span><span class="pill">React 18</span><span class="pill">TypeScript</span>
+      <span class="pill">Vite</span><span class="pill">WebSocket</span><span class="pill">Vitest</span>
+    </div>
+    <h1 style="margin-top:16px">BTSE 掛單簿<br><span style="color:var(--react)">架構師導讀</span></h1>
+    <p class="sub">
+      為新手工程師準備的專案導讀。從「這個東西是什麼」開始，
+      一路帶你走過架構設計、資料流、關鍵演算法，到每個檔案的職責分工。
+      不假設你事先了解 WebSocket 協議或金融市場術語。
+    </p>
+
+    <nav class="toc">
+      <p class="toc-title">目錄</p>
+      <ol>
+        <li><a href="#what">這個專案做什麼</a></li>
+        <li><a href="#run">怎麼跑起來</a></li>
+        <li><a href="#learning-path">建議的閱讀順序</a></li>
+        <li><a href="#arch">整體架構三層</a></li>
+        <li><a href="#types">核心型別</a></li>
+        <li><a href="#ws-protocol">WebSocket：snapshot + delta</a></li>
+        <li><a href="#book-state">帳本狀態：Map 為什麼比 Array 好</a></li>
+        <li><a href="#seqnum">seqNum 缺口偵測與 re-subscribe</a></li>
+        <li><a href="#selectrows">累計 total 與深度百分比</a></li>
+        <li><a href="#raf">rAF 批次更新</a></li>
+        <li><a href="#flash">閃爍動畫：useFlash + Web Animations API</a></li>
+        <li><a href="#diff">OrderBookSide：每幀 diff 出誰要閃</a></li>
+        <li><a href="#lastprice">Last price：漲跌色 + 箭頭</a></li>
+        <li><a href="#mock">離線 Mock Feed</a></li>
+        <li><a href="#test">測試策略</a></li>
+        <li><a href="#req-map">需求 → 代碼速查表</a></li>
+      </ol>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+
+<!-- WHAT -->
+<section class="sec" id="what">
+  <h2><span class="n">0</span> 這個專案做什麼</h2>
+  <p class="lead">先建立直覺，再看代碼。</p>
+
+  <p>
+    <strong>掛單簿（Order Book）</strong>是加密貨幣交易所的核心 UI。
+    它即時顯示市場上所有未成交的買單（Bid）和賣單（Ask），讓交易者看清楚「現在哪個價格有多少人想買、哪個價格有多少人想賣」。
+  </p>
+
+  <div class="diagram" style="padding: 20px 24px;">
+    <div style="display: flex; gap: 0; max-width: 380px; margin: 0 auto; flex-direction: column; font-size: 14px; font-family: monospace;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden;">
+        <div style="background: var(--card2); color: var(--muted); font-size: 11px; padding: 6px 10px; text-transform: uppercase;">Price (USD)</div>
+        <div style="background: var(--card2); color: var(--muted); font-size: 11px; padding: 6px 10px; text-align: right; text-transform: uppercase;">Size</div>
+        <div style="background: var(--card2); color: var(--muted); font-size: 11px; padding: 6px 10px; text-align: right; text-transform: uppercase;">Total</div>
+
+        <div style="color: var(--ask); padding: 5px 10px; border-top: 1px solid var(--line);">65,920</div>
+        <div style="padding: 5px 10px; text-align: right; border-top: 1px solid var(--line);">1,200</div>
+        <div style="padding: 5px 10px; text-align: right; border-top: 1px solid var(--line); color: var(--muted);">3,800</div>
+
+        <div style="color: var(--ask); padding: 5px 10px; border-top: 1px solid var(--line);">65,910</div>
+        <div style="padding: 5px 10px; text-align: right; border-top: 1px solid var(--line);">900</div>
+        <div style="padding: 5px 10px; text-align: right; border-top: 1px solid var(--line); color: var(--muted);">2,600</div>
+
+        <div style="color: var(--ask); padding: 5px 10px; border-top: 1px solid var(--line);">65,900</div>
+        <div style="padding: 5px 10px; text-align: right; border-top: 1px solid var(--line);">1,700</div>
+        <div style="padding: 5px 10px; text-align: right; border-top: 1px solid var(--line); color: var(--muted);">1,700</div>
+
+        <div style="grid-column: 1 / -1; background: rgba(0,177,93,.10); padding: 6px 10px; border-top: 1px solid var(--line); color: var(--bid); font-weight: 700; text-align: center; font-size: 15px;">↑ 65,892 <span style="font-size:11px;color:var(--muted);font-weight:400;">最後成交價</span></div>
+
+        <div style="color: var(--bid); padding: 5px 10px; border-top: 1px solid var(--line);">65,880</div>
+        <div style="padding: 5px 10px; text-align: right; border-top: 1px solid var(--line);">2,100</div>
+        <div style="padding: 5px 10px; text-align: right; border-top: 1px solid var(--line); color: var(--muted);">2,100</div>
+
+        <div style="color: var(--bid); padding: 5px 10px; border-top: 1px solid var(--line);">65,870</div>
+        <div style="padding: 5px 10px; text-align: right; border-top: 1px solid var(--line);">800</div>
+        <div style="padding: 5px 10px; text-align: right; border-top: 1px solid var(--line); color: var(--muted);">2,900</div>
+
+        <div style="color: var(--bid); padding: 5px 10px; border-top: 1px solid var(--line);">65,860</div>
+        <div style="padding: 5px 10px; text-align: right; border-top: 1px solid var(--line);">1,400</div>
+        <div style="padding: 5px 10px; text-align: right; border-top: 1px solid var(--line); color: var(--muted);">4,300</div>
+      </div>
+    </div>
+    <p style="text-align: center; color: var(--muted); font-size: 13px; margin: 12px 0 0;">
+      <span class="ask-t">紅色</span> = 賣單（Ask），<span class="bid-t">綠色</span> = 買單（Bid），中間 = 最後成交價。
+    </p>
+  </div>
+
+  <p>這個專案的目標：</p>
+  <ul>
+    <li>連接 BTSE 交易所的 WebSocket，接收 BTC 永續合約的即時掛單資料</li>
+    <li>每邊顯示 8 筆（離目前成交價最近的 8 個報價）</li>
+    <li>顯示每個報價的累計量（Total），以及對應的深度百分比 bar</li>
+    <li>報價有異動時顯示閃爍動畫（新報價閃整列、size 增減閃該格）</li>
+    <li>中間顯示最後成交價，漲顯示綠色，跌顯示紅色</li>
+  </ul>
+</section>
+
+<!-- RUN -->
+<section class="sec" id="run">
+  <h2>怎麼跑起來</h2>
+  <pre><span class="file">terminal</span><span class="c"># 1. 連真實 BTSE WebSocket（需要網路）</span>
+npm install
+npm run dev         <span class="c"># → http://localhost:5173</span>
+
+<span class="c"># 2. 離線 mock — 不需要網路，用本機假資料</span>
+VITE_MOCK=1 npm run dev
+
+<span class="c"># 3. 品質檢查</span>
+npm run typecheck   <span class="c"># TypeScript 型別檢查</span>
+npm run test        <span class="c"># Vitest 單元測試（18 條）</span>
+npm run build       <span class="c"># 正式 build（typecheck + bundle）</span></pre>
+
+  <div class="tip">
+    <b>第一次建議：</b>先用 <code>VITE_MOCK=1 npm run dev</code> 在本機跑起來，不需要網路，
+    可以看到完整的掛單簿動畫效果，再對照代碼理解。
+  </div>
+</section>
+
+<!-- LEARNING PATH -->
+<section class="sec" id="learning-path">
+  <h2><span class="n">1</span> 建議的閱讀順序</h2>
+  <p class="lead">不要從 <code>main.tsx</code> 開始讀，那樣會迷路。</p>
+
+  <div class="path-grid">
+    <div class="path-card">
+      <div class="step">Step 1 — 型別與常數</div>
+      <div class="title">先讀懂術語</div>
+      <div class="desc">
+        <code>src/types.ts</code> — 定義所有資料結構<br>
+        <code>src/constants.ts</code> — WebSocket 位址、顏色常數
+      </div>
+    </div>
+    <div class="path-card">
+      <div class="step">Step 2 — 純邏輯層</div>
+      <div class="title">核心演算法</div>
+      <div class="desc">
+        <code>src/lib/orderBook.ts</code> — 5 個純函式<br>
+        搞懂這裡，後面全部都通
+      </div>
+    </div>
+    <div class="path-card">
+      <div class="step">Step 3 — React hooks</div>
+      <div class="title">狀態與連線</div>
+      <div class="desc">
+        <code>src/hooks/useOrderBook.ts</code><br>
+        <code>src/hooks/useLastPrice.ts</code>
+      </div>
+    </div>
+    <div class="path-card">
+      <div class="step">Step 4 — 元件</div>
+      <div class="title">畫面呈現</div>
+      <div class="desc">
+        <code>OrderBook</code> → <code>OrderBookSide</code> → <code>OrderBookRow</code><br>
+        <code>LastPrice</code>
+      </div>
+    </div>
+    <div class="path-card">
+      <div class="step">Step 5 — 動畫</div>
+      <div class="title">閃爍效果</div>
+      <div class="desc">
+        <code>src/hooks/useFlash.ts</code><br>
+        Web Animations API
+      </div>
+    </div>
+    <div class="path-card">
+      <div class="step">Step 6 — 測試</div>
+      <div class="title">驗證理解</div>
+      <div class="desc">
+        <code>tests/orderBook.test.ts</code><br>
+        讀測試案例，確認你對邏輯的理解是否正確
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ARCH -->
+<section class="sec" id="arch">
+  <h2><span class="n">2</span> 整體架構三層</h2>
+  <p class="lead">最重要的設計原則：把邏輯留在純 TypeScript，React 只做最外層那件事。</p>
+
+  <div class="diagram">
+    <svg width="680" height="240" viewBox="0 0 680 240" role="img">
+      <defs>
+        <marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+          <path d="M0,0 L9,4.5 L0,9 Z" fill="#848e9c"></path>
+        </marker>
+      </defs>
+
+      <!-- Layer 1: lib -->
+      <rect class="dacc" x="10" y="185" width="660" height="46" rx="8"></rect>
+      <text class="dlabel" x="340" y="204" text-anchor="middle" style="font-weight:600">Layer 1 — 純函式（lib/ + utils/）</text>
+      <text class="dmuted" x="340" y="221" text-anchor="middle">applyLevels · applySnapshot · isContinuous · isCrossed · selectRows · formatPrice</text>
+
+      <!-- Layer 2: hooks -->
+      <rect class="dreact" x="10" y="115" width="320" height="56" rx="8"></rect>
+      <text class="dlabel" x="170" y="138" text-anchor="middle" style="font-weight:600">Layer 2 — React Hooks</text>
+      <text class="dmuted" x="170" y="155" text-anchor="middle">useOrderBook（WS + rAF batch）</text>
+
+      <rect class="dreact" x="350" y="115" width="320" height="56" rx="8"></rect>
+      <text class="dlabel" x="510" y="138" text-anchor="middle" style="font-weight:600">Layer 2 — React Hooks</text>
+      <text class="dmuted" x="510" y="155" text-anchor="middle">useLastPrice（trade WS）</text>
+
+      <!-- Layer 3: components -->
+      <rect class="dbox" x="10" y="20" width="660" height="78" rx="8"></rect>
+      <text class="dlabel" x="340" y="42" text-anchor="middle" style="font-weight:600">Layer 3 — React Components（純顯示）</text>
+      <rect class="dask" x="22" y="54" width="155" height="30" rx="5"></rect>
+      <text class="dlabel" x="99" y="73" text-anchor="middle" style="font-size:12px">OrderBookSide (sell)</text>
+      <rect class="dbid" x="188" y="54" width="155" height="30" rx="5"></rect>
+      <text class="dlabel" x="265" y="73" text-anchor="middle" style="font-size:12px">OrderBookSide (buy)</text>
+      <rect class="dbox" x="354" y="54" width="130" height="30" rx="5"></rect>
+      <text class="dlabel" x="419" y="73" text-anchor="middle" style="font-size:12px">LastPrice</text>
+      <rect class="dbox" x="495" y="54" width="163" height="30" rx="5"></rect>
+      <text class="dlabel" x="576" y="73" text-anchor="middle" style="font-size:12px">OrderBookRow × 8</text>
+
+      <!-- Arrows -->
+      <path class="darrow" d="M170,115 L170,183"></path>
+      <path class="darrow" d="M510,115 L510,183"></path>
+      <path class="darrow" d="M170,97 L170,21"></path>
+      <path class="darrow" d="M510,97 L419,83"></path>
+    </svg>
+  </div>
+
+  <p>三層職責：</p>
+  <div class="file-grid">
+    <div class="fl fh">檔案</div>
+    <div class="fl fh">職責</div>
+
+    <div class="fl">src/types.ts</div>
+    <div class="fl">全專案共用型別定義（無執行邏輯）</div>
+
+    <div class="fl">src/constants.ts</div>
+    <div class="fl">WebSocket URL、Topic、所有顏色值，唯一 SSOT</div>
+
+    <div class="fl">src/lib/orderBook.ts</div>
+    <div class="fl">帳本核心邏輯（純函式），可獨立單元測試</div>
+
+    <div class="fl">src/lib/socket.ts</div>
+    <div class="fl">建立 WebSocket 的唯一入口，切換真實 / mock</div>
+
+    <div class="fl">src/lib/mockFeed.ts</div>
+    <div class="fl">離線假資料流，實作和真實 WebSocket 相同的介面</div>
+
+    <div class="fl">src/utils/format.ts</div>
+    <div class="fl">千分位格式化（純函式）</div>
+
+    <div class="fl">src/hooks/useOrderBook.ts</div>
+    <div class="fl">WS 連線生命週期、合併 snapshot/delta、rAF 批次更新 → React state</div>
+
+    <div class="fl">src/hooks/useLastPrice.ts</div>
+    <div class="fl">訂閱 trade stream，追蹤最後成交價與漲跌方向</div>
+
+    <div class="fl">src/hooks/useFlash.ts</div>
+    <div class="fl">封裝 Web Animations API 的閃爍動畫邏輯</div>
+
+    <div class="fl">src/components/OrderBook.tsx</div>
+    <div class="fl">頂層容器，組合三個子元件，持有節流按鈕邏輯</div>
+
+    <div class="fl">src/components/OrderBookSide.tsx</div>
+    <div class="fl">渲染一邊報價，每幀 diff 計算哪些列要閃爍</div>
+
+    <div class="fl">src/components/OrderBookRow.tsx</div>
+    <div class="fl">單一報價列，持有兩個 useFlash 呼叫</div>
+
+    <div class="fl">src/components/LastPrice.tsx</div>
+    <div class="fl">最後成交價，根據漲跌切換顏色和箭頭</div>
+
+    <div class="fl">src/App.tsx</div>
+    <div class="fl">組裝兩個 hook 和 OrderBook 元件，管理節流 toggle state</div>
+  </div>
+
+  <div class="note">
+    <b>為什麼要這樣分層：</b><code>lib/orderBook.ts</code> 不 import 任何 React。
+    這代表它可以被 Vitest 直接測試——不需要渲染 React tree、不需要 mock WebSocket。
+    純邏輯集中在一個地方，哪裡出 bug 就改哪裡。React 層薄，想換框架只需換 hooks。
+  </div>
+</section>
+
+<!-- TYPES -->
+<section class="sec" id="types">
+  <h2><span class="n">3</span> 核心型別</h2>
+  <p class="lead">讀懂型別定義，後面的程式碼都在操作這些東西。</p>
+
+  <pre><span class="file">src/types.ts</span><span class="c">// WS 原始資料：價格和數量都是「字串」（交易所 API 的設計慣例）</span>
+<span class="k">export type</span> <span class="t">PriceLevel</span> = [price: <span class="t">string</span>, size: <span class="t">string</span>]
+
+<span class="c">// 帳本狀態：key = 價格（數字），value = 數量（數字）</span>
+<span class="k">export type</span> <span class="t">Book</span> = Map&lt;<span class="t">number</span>, <span class="t">number</span>&gt;
+
+<span class="c">// WS 收到的一包資料（可能是 snapshot 也可能是 delta）</span>
+<span class="k">export interface</span> <span class="t">OrderBookData</span> {
+  bids: <span class="t">PriceLevel</span>[]     <span class="c">// 買單列表</span>
+  asks: <span class="t">PriceLevel</span>[]     <span class="c">// 賣單列表</span>
+  seqNum: <span class="t">number</span>         <span class="c">// 這包的序號</span>
+  prevSeqNum: <span class="t">number</span>     <span class="c">// 上一包的序號（用來偵測掉包）</span>
+  type: <span class="s">'snapshot'</span> | <span class="s">'delta'</span>
+  symbol: <span class="t">string</span>         <span class="c">// 交易對，例如 'BTCPFC'</span>
+  timestamp: <span class="t">number</span>
+}
+
+<span class="c">// 一列報價準備好要渲染的資料</span>
+<span class="k">export interface</span> <span class="t">DisplayRow</span> {
+  price: <span class="t">number</span>           <span class="c">// 報價</span>
+  size: <span class="t">number</span>            <span class="c">// 數量</span>
+  total: <span class="t">number</span>           <span class="c">// 累計數量（從 spread 往外累加）</span>
+  percent: <span class="t">number</span>         <span class="c">// 0~1，total / 這邊最大的 total（深度 bar 用）</span>
+}
+
+<span class="k">export type</span> <span class="t">PriceTrend</span> = <span class="s">'up'</span> | <span class="s">'down'</span> | <span class="s">'same'</span>
+<span class="k">export type</span> <span class="t">ConnStatus</span> = <span class="s">'connecting'</span> | <span class="s">'open'</span> | <span class="s">'closed'</span></pre>
+
+  <p>
+    <strong>PriceLevel → Book 的轉換：</strong>WebSocket 給的是字串 tuple，
+    程式碼裡先 <code>Number(priceStr)</code> 轉成數字，存進 <code>Map&lt;number, number&gt;</code>。
+    這個轉換在 <code>applyLevels()</code> 裡發生一次，之後整個程式都用數字操作。
+  </p>
+</section>
+
+<!-- WS PROTOCOL -->
+<section class="sec" id="ws-protocol">
+  <h2><span class="n">4</span> WebSocket：snapshot + delta</h2>
+  <p class="lead">BTSE 的設計思路：不是每次都傳整本帳，只傳改動的部分。</p>
+
+  <ul>
+    <li><strong>第一包：snapshot</strong> — 完整帳本現況，所有 price level 全部在裡面</li>
+    <li><strong>之後每包：delta</strong> — 只傳「有改動的部分」：有新報價就加，有人取消就把 size 設為 0</li>
+  </ul>
+
+  <div class="diagram" aria-label="snapshot + delta 流程">
+    <svg width="640" height="100" viewBox="0 0 640 100" role="img">
+      <rect class="dsolidbox" x="10" y="28" width="110" height="44" rx="7"></rect>
+      <text class="dlabel" x="65" y="47" text-anchor="middle">snapshot</text>
+      <text class="dmuted" x="65" y="64" text-anchor="middle">完整帳本 seqNum=100</text>
+
+      <rect class="dbid" x="160" y="28" width="110" height="44" rx="7"></rect>
+      <text class="dlabel" x="215" y="47" text-anchor="middle">delta</text>
+      <text class="dmuted" x="215" y="64" text-anchor="middle">prev=100, seq=101</text>
+
+      <rect class="dbid" x="310" y="28" width="110" height="44" rx="7"></rect>
+      <text class="dlabel" x="365" y="47" text-anchor="middle">delta</text>
+      <text class="dmuted" x="365" y="64" text-anchor="middle">prev=101, seq=102</text>
+
+      <rect class="dask" x="460" y="28" width="165" height="44" rx="7"></rect>
+      <text class="dlabel" x="543" y="47" text-anchor="middle">delta（掉包）</text>
+      <text class="dmuted" x="543" y="64" text-anchor="middle">prev=105 ≠ 102 → resync</text>
+
+      <path class="darrow" d="M120,50 L157,50"></path>
+      <path class="darrow" d="M270,50 L307,50"></path>
+      <path class="darrow" d="M420,50 L457,50"></path>
+    </svg>
+  </div>
+
+  <p>連線後先送 subscribe，server 自動推 snapshot：</p>
+  <pre><span class="file">hooks/useOrderBook.ts</span>ws.<span class="f">send</span>(<span class="f">JSON.stringify</span>({ <span class="f">op</span>: <span class="s">'subscribe'</span>, <span class="f">args</span>: [<span class="s">'update:BTCPFC'</span>] }))</pre>
+
+  <p>處理收到的資料：</p>
+  <pre><span class="file">hooks/useOrderBook.ts — onmessage</span><span class="k">if</span> (data.type === <span class="s">'snapshot'</span>) {
+  resyncPending.current = <span class="k">false</span>          <span class="c">// 新 snapshot 到了，解除 resync guard</span>
+  <span class="k">const</span> built = <span class="f">applySnapshot</span>(data)       <span class="c">// 建新的 bids / asks Map</span>
+  asksBook.current = built.asks
+  bidsBook.current = built.bids
+  lastSeq.current = data.seqNum
+  <span class="f">flush</span>()
+}
+<span class="k">if</span> (data.type === <span class="s">'delta'</span>) {
+  <span class="k">if</span> (!<span class="f">isContinuous</span>(data.prevSeqNum, lastSeq.current)) {
+    <span class="f">resync</span>()                               <span class="c">// 掉包了，重新訂閱</span>
+    <span class="k">return</span>
+  }
+  <span class="f">applyLevels</span>(asksBook.current, data.asks) <span class="c">// 把改動合併進去</span>
+  <span class="f">applyLevels</span>(bidsBook.current, data.bids)
+  lastSeq.current = data.seqNum
+  <span class="k">if</span> (<span class="f">isCrossed</span>(bidsBook.current, asksBook.current)) {
+    <span class="f">resync</span>()                               <span class="c">// 帳本矛盾，也要重新訂閱</span>
+    <span class="k">return</span>
+  }
+  <span class="f">flush</span>()
+}</pre>
+</section>
+
+<!-- BOOK STATE -->
+<section class="sec" id="book-state">
+  <h2><span class="n">5</span> 帳本狀態：Map 為什麼比 Array 好</h2>
+  <p class="lead">資料結構的選擇直接影響代碼複雜度。</p>
+
+  <p>帳本的本質是「每個價格對應一個數量」，這正是 <code>Map&lt;price, size&gt;</code> 的用途：</p>
+
+  <pre><span class="file">lib/orderBook.ts — applyLevels</span><span class="k">export function</span> <span class="f">applyLevels</span>(book: <span class="t">Book</span>, levels: <span class="t">PriceLevel</span>[]): <span class="k">void</span> {
+  <span class="k">for</span> (<span class="k">const</span> [priceStr, sizeStr] <span class="k">of</span> levels) {
+    <span class="k">const</span> price = <span class="f">Number</span>(priceStr)
+    <span class="k">const</span> size  = <span class="f">Number</span>(sizeStr)
+    <span class="k">if</span> (size === <span class="v">0</span>) book.<span class="f">delete</span>(price)    <span class="c">// size=0 = 這個報價被撤銷</span>
+    <span class="k">else</span>           book.<span class="f">set</span>(price, size)   <span class="c">// 新增或更新</span>
+  }
+}</pre>
+
+  <p>
+    如果用 Array：每次收到 delta，你得先 <code>findIndex</code> 找那個 price 的位置，再 <code>splice</code> 或 <code>filter</code>——O(n) 查找。
+    Map 的 <code>set</code> / <code>delete</code> / <code>has</code> 都是 O(1)。
+  </p>
+
+  <div class="note">
+    <b>Book 放 useRef 而不是 useState：</b>Map 是可變結構，每次 delta 都直接 mutate 它（<code>book.set/delete</code>）。
+    React 的重新渲染不是每次 Map 改動就觸發，而是由 <code>flush()</code> 裡的 <code>setAsks/setBids</code> 控制——
+    這讓高頻 delta 不會造成過多的重新渲染。
+  </div>
+</section>
+
+<!-- SEQNUM -->
+<section class="sec" id="seqnum">
+  <h2><span class="n">6</span> seqNum 缺口偵測與 re-subscribe</h2>
+  <p class="lead">網路不可靠；掉包時帳本狀態必須恢復，這是這個作業最核心的考點。</p>
+
+  <h3>為什麼需要 seqNum 檢查</h3>
+  <p>
+    每一包 delta 都有 <code>prevSeqNum</code> 欄位，表示「我是接在 seqNum=X 那包之後的」。
+    如果 <code>delta.prevSeqNum ≠ 我上次處理的 seqNum</code>，代表中間有包掉了，
+    本地帳本已經和交易所不同步。這時候不能繼續 apply delta，必須重新訂閱拿新 snapshot。
+  </p>
+
+  <pre><span class="file">lib/orderBook.ts — isContinuous（純函式，可單元測試）</span><span class="k">export function</span> <span class="f">isContinuous</span>(prevSeqNum: <span class="t">number</span>, lastSeqNum: <span class="t">number</span> | <span class="k">null</span>): <span class="t">boolean</span> {
+  <span class="k">if</span> (lastSeqNum == <span class="k">null</span>) <span class="k">return false</span>   <span class="c">// 還沒收過 snapshot，不連續</span>
+  <span class="k">return</span> prevSeqNum === lastSeqNum
+}</pre>
+
+  <h3>resync：重新拿 snapshot</h3>
+  <pre><span class="file">hooks/useOrderBook.ts — resync()</span><span class="k">const</span> resync = () => {
+  <span class="k">if</span> (resyncPending.current) <span class="k">return</span>    <span class="c">// guard：在新 snapshot 到之前不重複觸發</span>
+  resyncPending.current = <span class="k">true</span>
+  lastSeq.current = <span class="k">null</span>
+  <span class="f">unsubscribe</span>(ws)
+  <span class="f">subscribe</span>(ws)    <span class="c">// server 收到後重推完整 snapshot</span>
+}</pre>
+
+  <div class="warn">
+    <b>為什麼需要 resyncPending guard：</b>
+    <code>resync()</code> 把 <code>lastSeq = null</code>，導致接下來每包 delta 的 <code>isContinuous</code> 都回傳 false，
+    每包都再呼叫一次 <code>resync()</code>——連鎖 unsubscribe + subscribe。
+    guard 確保：在新 snapshot 到達（把 <code>resyncPending</code> 重置為 false）之前，所有 delta 都直接跳過。
+  </div>
+
+  <h3>Crossed orderbook 偵測</h3>
+  <p>
+    「Crossed」代表最佳買單價格 ≥ 最佳賣單價格——邏輯上不可能，表示帳本狀態錯誤。
+    每次 apply delta 後都呼叫 <code>isCrossed</code>，一旦成立就視同掉包呼叫 <code>resync()</code>。
+  </p>
+  <pre><span class="file">lib/orderBook.ts — isCrossed</span><span class="k">export function</span> <span class="f">isCrossed</span>(bids: <span class="t">Book</span>, asks: <span class="t">Book</span>): <span class="t">boolean</span> {
+  <span class="k">if</span> (bids.size === <span class="v">0</span> || asks.size === <span class="v">0</span>) <span class="k">return false</span>   <span class="c">// 空帳本不算 crossed</span>
+  <span class="k">const</span> bestBid = <span class="f">Math.max</span>(...bids.keys())
+  <span class="k">const</span> bestAsk = <span class="f">Math.min</span>(...asks.keys())
+  <span class="k">return</span> bestBid >= bestAsk
+}</pre>
+</section>
+
+<!-- SELECTROWS -->
+<section class="sec" id="selectrows">
+  <h2><span class="n">7</span> 累計 total 與深度百分比</h2>
+  <p class="lead">規格書規定的累計方向，跟你直覺想的可能不同。</p>
+
+  <p>
+    「Total」不是某個報價的 size，而是「從 spread 到那個報價，中間所有報價的 size 加起來」。
+    規格書規定：
+  </p>
+  <ul>
+    <li><strong>賣單（Sell）：</strong>從最低價（best ask，最靠近 spread）開始往上累加</li>
+    <li><strong>買單（Buy）：</strong>從最高價（best bid，最靠近 spread）開始往下累加</li>
+  </ul>
+
+  <pre><span class="file">lib/orderBook.ts — selectRows（核心演算法）</span><span class="k">export function</span> <span class="f">selectRows</span>(book: <span class="t">Book</span>, side: <span class="t">Side</span>, rows: <span class="t">number</span> = ROWS): <span class="t">DisplayRow</span>[] {
+  <span class="k">const</span> entries = [...book.<span class="f">entries</span>()]
+  <span class="k">const</span> sorted =
+    side === <span class="s">'sell'</span>
+      ? entries.<span class="f">sort</span>((a, b) => a[<span class="v">0</span>] - b[<span class="v">0</span>])  <span class="c">// 升序：最低價在前（best ask 先累加）</span>
+      : entries.<span class="f">sort</span>((a, b) => b[<span class="v">0</span>] - a[<span class="v">0</span>])  <span class="c">// 降序：最高價在前（best bid 先累加）</span>
+  <span class="k">const</span> top = sorted.<span class="f">slice</span>(<span class="v">0</span>, rows)           <span class="c">// 取最靠近 spread 的 8 筆</span>
+
+  <span class="k">let</span> cumulative = <span class="v">0</span>
+  <span class="k">const</span> withTotals = top.<span class="f">map</span>(([price, size]) => {
+    cumulative += size
+    <span class="k">return</span> { price, size, total: cumulative }
+  })
+  <span class="k">const</span> maxTotal = cumulative || <span class="v">1</span>            <span class="c">// 最後一筆 cumulative = 這邊的最大值</span>
+  <span class="k">const</span> display = withTotals.<span class="f">map</span>((r) => ({
+    ...r,
+    percent: r.total / maxTotal,              <span class="c">// 0~1，深度 bar 的寬度用這個</span>
+  }))
+
+  <span class="c">// 賣單：累加後最低價（best ask）total 最小；顯示時它要在底部（靠近 last price）</span>
+  <span class="c">// 所以反轉：最高價（total 最大）在頂端</span>
+  <span class="k">return</span> side === <span class="s">'sell'</span> ? display.<span class="f">reverse</span>() : display
+}</pre>
+
+  <div class="tip">
+    <b>最容易搞混的地方：</b>賣單先升序排（讓 best ask 先被累加），但顯示時要反轉（讓 best ask 在底部、靠近 last price）。
+    買單直接降序排（best bid 在頂），累加後不需要反轉。
+  </div>
+</section>
+
+<!-- RAF -->
+<section class="sec" id="raf">
+  <h2><span class="n">8</span> requestAnimationFrame 批次更新</h2>
+  <p class="lead">高頻 WebSocket 訊息與 React 重新渲染的協調。</p>
+
+  <p>
+    BTSE 的 delta 大約每 200–500ms 一批，偶爾短時間連發多包。
+    如果每收到一包就 <code>setState</code>，React 可能每秒重渲染幾十次——
+    大部分 render 對人眼來說是無意義的，只是在浪費 CPU。
+  </p>
+
+  <pre><span class="file">hooks/useOrderBook.ts — flush()</span><span class="k">const</span> flushQueued = <span class="f">useRef</span>(<span class="k">false</span>)
+<span class="k">const</span> lastFlushAt  = <span class="f">useRef</span>(<span class="v">0</span>)
+
+<span class="k">const</span> doFlush = () => {
+  flushQueued.current = <span class="k">false</span>
+  lastFlushAt.current = <span class="f">Date.now</span>()
+  <span class="f">setAsks</span>(<span class="f">selectRows</span>(asksBook.current, <span class="s">'sell'</span>))  <span class="c">// 觸發 React re-render</span>
+  <span class="f">setBids</span>(<span class="f">selectRows</span>(bidsBook.current, <span class="s">'buy'</span>))
+}
+
+<span class="k">const</span> flush = () => {
+  <span class="k">if</span> (flushQueued.current) <span class="k">return</span>   <span class="c">// 已排隊等下一幀，跳過這包</span>
+  flushQueued.current = <span class="k">true</span>
+  <span class="k">const</span> elapsed = <span class="f">Date.now</span>() - lastFlushAt.current
+  <span class="k">const</span> wait = <span class="f">Math.max</span>(<span class="v">0</span>, throttleMsRef.current - elapsed)
+  <span class="k">if</span> (wait === <span class="v">0</span>) {
+    <span class="f">requestAnimationFrame</span>(doFlush)           <span class="c">// 下一幀才真正 setState</span>
+  } <span class="k">else</span> {
+    <span class="f">setTimeout</span>(() => <span class="f">requestAnimationFrame</span>(doFlush), wait)  <span class="c">// 節流模式加延遲</span>
+  }
+}</pre>
+
+  <div class="note">
+    <b>rAF 的好處：</b>
+    <code>requestAnimationFrame</code> 自動與螢幕的 vsync 對齊（通常 60fps，即每 16ms 一幀）。
+    無論 WebSocket 多快丟資料，React 最多每幀更新一次畫面。
+    按下節流按鈕後，<code>throttleMsRef.current = 300</code>，flush 至少間隔 300ms 才觸發，
+    方便肉眼觀察帳本變化。
+  </div>
+</section>
+
+<!-- FLASH -->
+<section class="sec" id="flash">
+  <h2><span class="n">9</span> 閃爍動畫：useFlash + Web Animations API</h2>
+
+  <pre><span class="file">hooks/useFlash.ts</span><span class="k">export function</span> <span class="f">useFlash</span>(
+  ref: RefObject&lt;HTMLElement | <span class="k">null</span>&gt;,
+  token: <span class="t">number</span> | <span class="k">null</span>,   <span class="c">// null = 不閃；傳入非 null 的新 token = 觸發閃爍</span>
+  color: <span class="t">string</span>,
+): <span class="k">void</span> {
+  <span class="k">const</span> lastToken = <span class="f">useRef</span>&lt;<span class="t">number</span> | <span class="k">null</span>&gt;(<span class="k">null</span>)
+  <span class="f">useEffect</span>(() => {
+    <span class="k">if</span> (token == <span class="k">null</span> || token === lastToken.current) <span class="k">return</span>
+    lastToken.current = token
+    <span class="k">const</span> el = ref.current
+    <span class="k">if</span> (!el) <span class="k">return</span>
+    el.<span class="f">animate</span>(
+      [{ backgroundColor: color }, { backgroundColor: <span class="s">'transparent'</span> }],
+      { duration: <span class="v">400</span>, easing: <span class="s">'ease-out'</span> },
+    )
+  }, [token, color, ref])
+}</pre>
+
+  <p>使用 <strong>Web Animations API</strong>（<code>element.animate()</code>）而不是 CSS class toggle 的原因：</p>
+  <ul>
+    <li>快速連續觸發時，瀏覽器自動「取消舊動畫、重新播放新動畫」，不需要手動清理</li>
+    <li>動畫跑在 compositor thread，不阻塞主線程</li>
+    <li>顏色可以動態傳入（紅或綠由外部決定），不需要定義 CSS keyframe</li>
+  </ul>
+
+  <div class="warn">
+    <b>如果改用 CSS class toggle 的問題：</b>
+    必須先 remove class → 等一幀 reflow → 再 add class，才能讓動畫重新播放。
+    在高頻更新下容易遺漏閃爍。<code>element.animate()</code> 每次呼叫都建立新的 Animation 實例，瀏覽器原生處理堆疊。
+  </div>
+</section>
+
+<!-- DIFF -->
+<section class="sec" id="diff">
+  <h2><span class="n">10</span> OrderBookSide：每幀 diff 出誰要閃</h2>
+  <p class="lead">只有「有變動的列」才閃，沒變的不要觸發動畫。</p>
+
+  <p><code>OrderBookSide</code> 保留上一幀的 <code>Map&lt;price, size&gt;</code>，每次重新渲染時和新資料比較：</p>
+
+  <pre><span class="file">components/OrderBookSide.tsx</span><span class="k">const</span> prevSizes = <span class="f">useRef</span>&lt;Map&lt;<span class="t">number</span>, <span class="t">number</span>&gt;&gt;(<span class="k">new</span> Map())
+<span class="k">const</span> tokenRef  = <span class="f">useRef</span>(<span class="v">0</span>)
+tokenRef.current += <span class="v">1</span>           <span class="c">// 每次 render 遞增，代表「這是一個新的 tick」</span>
+
+<span class="k">const</span> hydrated = prevSizes.current.size > <span class="v">0</span>   <span class="c">// 第一次不閃（避免初始 snapshot 全部 8 列同時閃）</span>
+
+<span class="k">const</span> annotated = rows.<span class="f">map</span>((r) => {
+  <span class="k">const</span> prev    = prevSizes.current.<span class="f">get</span>(r.price)
+  <span class="k">const</span> isNew   = hydrated && prev === <span class="k">undefined</span>          <span class="c">// 上幀沒有這個 price → 新報價</span>
+  <span class="k">const</span> sizeDir = prev === <span class="k">undefined</span> ? <span class="k">null</span>
+                : r.size > prev ? <span class="s">'up'</span>
+                : r.size < prev ? <span class="s">'down'</span> : <span class="k">null</span>          <span class="c">// size 增 or 減</span>
+  <span class="k">return</span> { ...r, isNew, sizeDir }
+})
+
+<span class="c">// 在子元件的 effect 之後才更新 prevSizes（讓子元件先拿到正確的 diff）</span>
+<span class="f">useEffect</span>(() => {
+  <span class="k">const</span> next = <span class="k">new</span> Map&lt;<span class="t">number</span>, <span class="t">number</span>&gt;()
+  <span class="k">for</span> (<span class="k">const</span> r <span class="k">of</span> rows) next.<span class="f">set</span>(r.price, r.size)
+  prevSizes.current = next
+})</pre>
+
+  <div class="note">
+    <b>為什麼 prevSizes 在 effect 裡更新：</b>
+    React 保證父元件的 effect 在子元件的 effect 之後才執行。
+    所以 <code>OrderBookRow</code> 裡的 <code>useFlash</code> effect 先比較 token 並觸發動畫，
+    之後 <code>OrderBookSide</code> 的 effect 才把 prevSizes 更新成新值。
+    如果在 render 期間直接更新 prevSizes，子元件就看不到差異，閃爍邏輯失效。
+  </div>
+</section>
+
+<!-- LASTPRICE -->
+<section class="sec" id="lastprice">
+  <h2><span class="n">11</span> Last price：漲跌色 + 箭頭</h2>
+
+  <pre><span class="file">hooks/useLastPrice.ts — 核心邏輯</span><span class="k">const</span> next = <span class="f">Number</span>(first.price)
+<span class="k">const</span> last = prev.current
+<span class="k">const</span> nextTrend: <span class="t">PriceTrend</span> =
+  last == <span class="k">null</span> || next === last ? <span class="s">'same'</span>
+  : next > last ? <span class="s">'up'</span> : <span class="s">'down'</span>
+prev.current = next    <span class="c">// ref 記住這次的價格，下次比較用</span>
+<span class="f">setTrend</span>(nextTrend)
+<span class="f">setPrice</span>(next)</pre>
+
+  <pre><span class="file">components/LastPrice.tsx — 查表決定樣式</span><span class="k">const</span> STYLE: Record&lt;<span class="t">PriceTrend</span>, { color: <span class="t">string</span>; background: <span class="t">string</span>; arrow: <span class="t">string</span> }&gt; = {
+  up:   { color: COLORS.lastUpText,   background: COLORS.lastUpBg,   arrow: <span class="s">'↑'</span> },
+  down: { color: COLORS.lastDownText, background: COLORS.lastDownBg, arrow: <span class="s">'↓'</span> },
+  same: { color: COLORS.lastSameText, background: COLORS.lastSameBg, arrow: <span class="s">''</span>  },
+}</pre>
+
+  <p>所有顏色值都從 <code>constants.ts</code> 的 <code>COLORS</code> 取，只有一個地方管理——改顏色不用到處找。</p>
+</section>
+
+<!-- MOCK -->
+<section class="sec" id="mock">
+  <h2><span class="n">12</span> 離線 Mock Feed</h2>
+  <p class="lead">設計讓 hooks 不需要知道它連的是真實還是假的 WebSocket。</p>
+
+  <pre><span class="file">lib/socket.ts — 唯一切換點</span><span class="k">export const</span> USE_MOCK = <span class="f">import.meta.env</span>.VITE_MOCK === <span class="s">'1'</span>
+
+<span class="k">export function</span> <span class="f">createSocket</span>(url: <span class="t">string</span>): WebSocket {
+  <span class="k">if</span> (USE_MOCK) <span class="k">return new</span> <span class="f">MockSocket</span>(url) <span class="k">as unknown as</span> WebSocket
+  <span class="k">return new</span> <span class="f">WebSocket</span>(url)
+}</pre>
+
+  <p><code>MockSocket</code>（<code>lib/mockFeed.ts</code>）實作和真實 WebSocket 相同的介面，行為：</p>
+  <ul>
+    <li>初始：推送一次完整 50-level snapshot</li>
+    <li>每 450ms：推一批 delta（隨機改 1–3 個 price level）</li>
+    <li>每 800ms：推一筆 trade（更新 last price）</li>
+    <li>偶爾 size=0（刪除一個 level）→ 觸發新報價出現的閃爍</li>
+  </ul>
+
+  <div class="note">
+    <b>設計原則：</b><code>useOrderBook</code> 和 <code>useLastPrice</code> 只呼叫 <code>createSocket(url)</code>，
+    不知道底下是真的還是假的。這讓 demo、截圖、CI 完全不需要外部連線，
+    也讓你在本機隨時能看到動畫效果。
+  </div>
+</section>
+
+<!-- TEST -->
+<section class="sec" id="test">
+  <h2><span class="n">13</span> 測試策略</h2>
+  <p class="lead">把可測邏輯抽進純函式，測試就很簡單。</p>
+
+  <pre><span class="file">terminal</span>$ npm run test
+
+ ✓ tests/format.test.ts    (5 tests)
+ ✓ tests/orderBook.test.ts (13 tests)
+
+ Test Files  2 passed (2)
+      Tests  18 passed (18)</pre>
+
+  <table>
+    <thead><tr><th>測試檔</th><th>測了哪些邏輯</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>tests/format.test.ts</code></td>
+        <td>千分位、小數、負數格式化</td>
+      </tr>
+      <tr>
+        <td><code>tests/orderBook.test.ts</code></td>
+        <td>
+          <code>applyLevels</code> 新增 / 更新 / 刪除（size=0）<br>
+          <code>applySnapshot</code> 建新 Map<br>
+          <code>isContinuous</code> 正常 / null / 缺口三種情境<br>
+          <code>isCrossed</code> 正常 spread / bid=ask / bid&gt;ask / 空帳本<br>
+          <code>selectRows</code> 累計方向、排序、percent 計算、截取 8 筆
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="note">
+    <b>為什麼只測純函式：</b>
+    測試 hooks 需要 mock WebSocket、mock timer，測試 components 需要渲染 React tree——
+    工程量大、維護成本高。把<strong>所有核心業務邏輯</strong>抽進 <code>lib/</code>，
+    用最簡單的 Vitest 就能覆蓋最重要的正確性。
+    React 層（WebSocket + 動畫）靠 mock feed + 瀏覽器目視驗收。
+  </div>
+</section>
+
+<!-- REQ MAP -->
+<section class="sec" id="req-map">
+  <h2><span class="n">14</span> 需求 → 代碼速查表</h2>
+  <p class="lead">想找某個功能在哪裡實作，查這張表。</p>
+  <table>
+    <thead>
+      <tr><th>功能</th><th>實作位置</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>每邊最多 8 筆報價</td><td><code>constants.ts</code> ROWS=8 → <code>selectRows(book, side, ROWS)</code></td></tr>
+      <tr><td>累計 total（遠離 spread）</td><td><code>lib/orderBook.ts</code> <code>selectRows</code> → <a href="#selectrows">§7</a></td></tr>
+      <tr><td>深度百分比 bar</td><td><code>DisplayRow.percent</code> → <code>OrderBookRow.tsx</code> bar div 的 <code>width</code></td></tr>
+      <tr><td>新報價整列閃（賣紅 / 買綠）</td><td><code>OrderBookSide.tsx</code> isNew → <code>useFlash</code> → <a href="#flash">§9</a></td></tr>
+      <tr><td>Size 變動 cell 閃（增綠 / 減紅）</td><td><code>OrderBookSide.tsx</code> sizeDir → <code>OrderBookRow.tsx</code> sizeRef</td></tr>
+      <tr><td>千分位格式化</td><td><code>utils/format.ts</code> <code>formatPrice</code> / <code>formatSize</code></td></tr>
+      <tr><td>Last price 漲跌色 + 箭頭</td><td><code>useLastPrice.ts</code> → <code>LastPrice.tsx</code> STYLE lookup table</td></tr>
+      <tr><td>seqNum 缺口 re-subscribe</td><td><code>lib/orderBook.ts</code> isContinuous → <code>useOrderBook.ts</code> resync() → <a href="#seqnum">§6</a></td></tr>
+      <tr><td>Crossed orderbook 偵測</td><td><code>lib/orderBook.ts</code> isCrossed → <code>useOrderBook.ts</code> delta handler</td></tr>
+      <tr><td>resync 期間不重複觸發</td><td><code>useOrderBook.ts</code> resyncPending ref guard</td></tr>
+      <tr><td>斷線自動重連（1.5s）</td><td><code>useOrderBook.ts</code> / <code>useLastPrice.ts</code> ws.onclose <code>setTimeout(connect, 1500)</code></td></tr>
+      <tr><td>rAF 批次更新 / 節流模式</td><td><code>useOrderBook.ts</code> flush() → <a href="#raf">§8</a></td></tr>
+      <tr><td>離線假資料</td><td><code>lib/socket.ts</code> + <code>lib/mockFeed.ts</code> → <a href="#mock">§12</a></td></tr>
+      <tr><td>hover 整列變色</td><td><code>index.scss</code> <code>.row:hover</code> 純 CSS，無 JS 狀態</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<div class="foot">
+  <p>
+    完整規格書：<a href="SPEC.md">SPEC.md</a> ·
+    WebSocket API：<a href="https://btsecom.github.io/docs/futures/en/#orderbook-incremental-updates" target="_blank" rel="noopener">btsecom.github.io/docs</a>
+  </p>
+</div>
+
+</div>
+</body>
+</html>
