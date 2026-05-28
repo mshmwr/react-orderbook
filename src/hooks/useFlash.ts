@@ -20,6 +20,7 @@ export function useFlash(
     lastToken.current = token
     const el = ref.current
     if (!el || typeof el.animate !== 'function') return
+    el.getAnimations().forEach(a => a.cancel())
     el.animate(
       [{ backgroundColor: color }, { backgroundColor: 'transparent' }],
       { duration: 400, easing: 'ease-out' },
