@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { OrderBookRow } from '@/components/OrderBookRow'
 import type { AnnotatedRow } from '@/components/OrderBookRow'
 import type { DisplayRow, Side } from '@/types'
@@ -27,7 +27,7 @@ export function OrderBookSide({ side, rows }: Props) {
   const token = tokenRef.current
 
   const hydrated = prevSizes.current.size > 0
-  const annotated: AnnotatedRow[] = rows.map((r) => {
+  const annotated = useMemo<AnnotatedRow[]>(() => rows.map((r) => {
     const prev = prevSizes.current.get(r.price)
     const isNew = hydrated && prev === undefined
     let sizeDir: AnnotatedRow['sizeDir'] = null
@@ -36,7 +36,7 @@ export function OrderBookSide({ side, rows }: Props) {
       else if (r.size < prev) sizeDir = 'down'
     }
     return { ...r, isNew, sizeDir }
-  })
+  }), [rows, hydrated])
 
   useEffect(() => {
     const next = new Map<number, number>()
