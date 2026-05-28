@@ -29,6 +29,7 @@ export function useFlash(
     return () => {
       animRef.current?.cancel()
       animRef.current = null
+      lastToken.current = null
     }
   }, [token, color, ref])
 }
