@@ -15,13 +15,14 @@ export function useFlash(
   color: string,
 ): void {
   const lastToken = useRef<number | null>(null)
+  const animRef = useRef<Animation | null>(null)
   useEffect(() => {
     if (token === null || token === lastToken.current) return
     lastToken.current = token
     const el = ref.current
     if (!el || typeof el.animate !== 'function') return
-    el.getAnimations().forEach(a => a.cancel())
-    el.animate(
+    animRef.current?.cancel()
+    animRef.current = el.animate(
       [{ backgroundColor: color }, { backgroundColor: 'transparent' }],
       { duration: 400, easing: 'ease-out' },
     )
