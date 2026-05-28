@@ -30,8 +30,11 @@ export function OrderBookSide({ side, rows }: Props) {
   const annotated: AnnotatedRow[] = rows.map((r) => {
     const prev = prevSizes.current.get(r.price)
     const isNew = hydrated && prev === undefined
-    const sizeDir: AnnotatedRow['sizeDir'] =
-      prev === undefined ? null : r.size > prev ? 'up' : r.size < prev ? 'down' : null
+    let sizeDir: AnnotatedRow['sizeDir'] = null
+    if (prev !== undefined) {
+      if (r.size > prev) sizeDir = 'up'
+      else if (r.size < prev) sizeDir = 'down'
+    }
     return { ...r, isNew, sizeDir }
   })
 
