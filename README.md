@@ -61,20 +61,6 @@ src/
 └── constants.ts          # SYMBOL · ROWS · WS endpoints · COLORS
 ```
 
-### Design decisions worth noting
-
-**`Book = Map<number, number>` (price → size)**  
-O(1) set/delete per level. Arrays would require O(n) `findIndex` on every delta tick.
-
-**Refs hold book state; React state holds display rows**  
-`asksBook` / `bidsBook` are `useRef<Book>`. Merging deltas never triggers a render — only `flush()` does, once per animation frame.
-
-**`resyncPending` guard in `useOrderBook`**  
-Without this flag, each orphaned delta arriving before the fresh snapshot re-triggers `unsubscribe + subscribe`, causing a cascade of re-subscribe requests to the server.
-
-**Flash diff in `OrderBookSide`, not `OrderBookRow`**  
-The parent computes `isNew` / `sizeDir` and passes them as props. The previous-frame map is committed in `useEffect` (after all child flash effects run), so children always diff against the *prior* frame's snapshot — not the current one.
-
 ---
 
 ## Requirements → Code
