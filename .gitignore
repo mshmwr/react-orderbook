@@ -1,8 +1,4 @@
-node_modules
-dist
-dist-ssr
-*.local
-.vite
+node_modules/
+dist/
 .DS_Store
-SPEC.md
-guide.html
+*.local
