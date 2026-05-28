@@ -124,7 +124,13 @@ body {
 
     .price { text-align: left; }
 
-    .size,
+    .size {
+      align-self: stretch;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
     .total { text-align: right; }
   }
 
