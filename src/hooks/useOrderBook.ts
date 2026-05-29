@@ -127,8 +127,8 @@ export function useOrderBook(throttleMs = 0): OrderBookState {
             resync()
             return
           }
-          applyLevels(asksBook.current, data.asks)
-          applyLevels(bidsBook.current, data.bids)
+          applyLevels(asksBook.current, data.asks ?? [])
+          applyLevels(bidsBook.current, data.bids ?? [])
           lastSeq.current = data.seqNum
           // Crossed orderbook (best bid >= best ask) is invalid per BTSE spec.
           if (isCrossed(bidsBook.current, asksBook.current)) {

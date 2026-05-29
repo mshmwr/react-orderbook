@@ -31,5 +31,5 @@ export function useFlash(
       animRef.current = null
       lastToken.current = null
     }
-  }, [token, color, ref])
+  }, [token, color])
 }
